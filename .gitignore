@@ -1,6 +1,7 @@
+# non-class directories
 resources/
-*.docx
-spark-notes.md
+etc/
+
+# project files
 .idea/
 *.iml
-etc/
