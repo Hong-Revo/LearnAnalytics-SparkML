@@ -13,6 +13,25 @@ This repository contains the materials for the course entitled: _Spark with HDIn
 2. [Class Playlist](https://open.spotify.com/user/pakmanaz/playlist/02R6d9fLRwxI06EHcm2Mcs)
     * As your instructor, I'll also be your workshop dj. Feel free to make requests.
 
+## Schedule
+
+### Day One
+
++ Spark Fundamentals
++ Running Spark Applications on HDInsight and YARN
++ Spark SQL and the DataFrames and Datasets API
+
+### Day Two
+
++ SparkML Pipelines
++ Tokenization and Text Featurization
++ `mmlspark`
+
+### Day Three
+
+1. R Server on Spark
+2. GraphFrames & Structured Streaming
+3. Hackathon
 
 ## Contributing
 
