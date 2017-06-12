@@ -1,0 +1,263 @@
+# Modeling with RxSpark
+
+This section shows how to use the `RxSpark` compute context for modeling.
+
+# Locate RevoShare dir
+
+Every MRS installation on a HDFS environment creates a share directory on HDFS. By default, each user will have her own shared directory under the `/user/RevoShare/` file path.
+
+```{r revoshare}
+
+rxHadoopListFiles("/user/RevoShare/")
+username <- system("whoami", intern = TRUE)
+data_path <- file.path("/user/RevoShare", username)
+
+```
+
+# Saving the Spark DataFrame to CSV
+
+The `RxSpark` and the Spark Compute contexts are completely distinct compute environments. In order to use the `rx` functions, we need to move the Spark DataFrame into a format that MRS can understand.
+
+## Write Sample Taxi to RevoShare 
+
+```{r save_csv}
+
+library(sparklyr)
+spark_write_csv(taxi_binary, 
+                path = file.path(data_path, 'sampleTaxi'))
+
+
+```
+
+Shut down the `sparklyr` application:
+
+```{r spark_disconnect}
+spark_disconnect(sc)
+
+```
+
+
+## Remove SUCCESS dir
+
+```{r remove_success}
+
+rxHadoopListFiles(file.path(data_path, "sampleTaxi"))
+file_to_delete <- file.path(data_path, 
+                            "sampleTaxi", "_SUCCESS")
+delete_command <- paste("fs -rm", file_to_delete)
+rxHadoopCommand(delete_command)
+
+
+```
+
+
+# Create HDFS and Spark Contexts for Revo
+
+Let's create the pointers to the file paths and HDFS to use the `RxSpark` compute context.
+
+```{r hdfs_pointers}
+
+myNameNode <- "default"
+myPort <- 0
+hdfsFS <- RxHdfsFileSystem(hostName = myNameNode, 
+                           port = myPort)
+
+taxi_text <- RxTextData(file.path(data_path,
+                                  "sampleTaxi"),
+                        fileSystem = hdfsFS)
+
+taxi_xdf <- RxXdfData(file.path(data_path, "taxiXdf"),
+                      fileSystem = hdfsFS)
+
+
+```
+
+
+# create RxSpark compute context
+
+```{r rx_spark_context}
+
+
+computeContext <- RxSpark(consoleOutput=TRUE,
+                          nameNode=myNameNode,
+                          port=myPort,
+                          executorCores=6, 
+                          executorMem = "14g", 
+                          executorOverheadMem = "7g", 
+                          persistentRun = TRUE, 
+                          extraSparkConfig = "--conf spark.speculation=true")
+
+rxSetComputeContext(computeContext)
+
+
+
+```
+
+## Import to XDF
+
+Now we use our `rxImport` function to import the csv into an xdf.
+
+```{r csv_import_xdf}
+
+
+col_classes <- c('VendorID' = "factor",
+                 'passenger_count' = "integer",
+                 'trip_distance' = "numeric",
+                 'RateCodeID' = "factor",
+                 'store_and_fwd_flag' = "factor",
+                 'payment_type' = "factor",
+                 'fare_amount' = "numeric",
+                 'tip_amount' = "numeric",
+                 'tolls_amount' = "numeric",
+                 'pickup_hour' = "factor",
+                 'pickup_dow' = "factor", 
+                 'dropoff_hour' = "factor",
+                 'dropoff_dow' = "factor",
+                 'pickup_nhood' = "factor",
+                 'dropoff_nhood' = "factor",
+                 'kSplits' = "factor",
+                 'tip_pct' = "numeric",
+                 'good_tip' = "factor")
+
+rxImport(inData = taxi_text, taxi_xdf, overwrite = TRUE, colClasses = col_classes)
+rxGetInfo(taxi_xdf, getVarInfo = TRUE)
+
+
+```
+
+## Simple EDA
+
+```{r eda_trips}
+
+tip_dist_df <- rxCube(tip_pct ~ pickup_hour + pickup_dow, 
+                      data = taxi_xdf, returnDataFrame = TRUE)
+
+library(ggplot2)
+library(magrittr)
+
+tip_dist_df %>% ggplot(aes(x = pickup_hour, y = pickup_dow, fill = tip_pct)) +
+  geom_tile() + theme_minimal() + 
+  scale_fill_continuous(label = scales::percent) +
+  labs(x = "Pickup Hour", y = "Pickup Day of Week", fill = "Tip Percent",
+      title = "Distribution of Tip Percents",
+      subtitle = "Do Passengers Tip More in the AM?")
+
+```
+
+
+# Creating Linear Models
+
+Let's predict tip_pct as a function of distance and neighborhoods. In order to ensure that the neighbhorhood columns are treated as categorical, we will first convert them to factors. `RevoScaleR` and the `RxSpark` compute context are more picky about factor types than base R models, since they utilize data that is chunked and stored in distributed file systems. 
+
+```{r rx_factors}
+
+system.time(linmod <- rxLinMod(tip_pct ~ pickup_nhood +  trip_distance, 
+                               data = taxi_xdf, cube = TRUE))
+
+system.time(linmod <- rxLinMod(tip_pct ~ pickup_nhood +  trip_distance, 
+                               data = taxi_xdf, cube = TRUE))
+
+```
+
+Now let's try to train the model with an additional categorical variable. We will use the `cube = TRUE` argument, which partitions the data across each category of the `pickup_nhood` variable. This results in significant speedups.
+
+```{r rx_lm}
+
+system.time(linmod <- rxLinMod(tip_pct ~ pickup_nhood + pickup_hour + trip_distance, 
+                               data = taxi_xdf, cube = TRUE))
+
+```
+
+## Creating Decision and Ensemble Trees
+
+
+```{r}
+
+system.time(dtree <- rxDTree(good_tip ~ trip_distance + passenger_count,
+                                 data = taxi_xdf, method = "class"))
+
+plot(RevoTreeView::createTreeView(dtree))
+
+system.time(dforest <- rxDForest(good_tip ~ pickup_nhood + pickup_hour + trip_distance,
+                                 data = taxi_xdf, method = "class"))
+
+
+```
+
+## Publish to AzureML
+
+We can use the [`AzureML`](https://github.com/RevolutionAnalytics/AzureML) package to convert our trained model as an Azure API. You'll need to get your security credentials from [AzureML Studio](https://studio.azureml.net). Click on _Settings_, copy _Workspace ID_. Then click on _Authorization Tokens_ at the top header, and copy your _Primary Authorization Token_. 
+
+```{r}
+packageVersion("AzureML")
+library(AzureML)
+ws <- workspace(
+  id = "----",
+  auth = "------" 
+)
+
+head(datasets(ws))
+AzureML::experiments(ws)
+```
+
+As of right now (March 2017), AzureML does not have `rx` functions from the `RevoScaleR` package. Therefore, we need to convert our `RevoScaleR` model into a model that GNU-R/MRO can understand. Fortunately, the `RevoScaleR` modeling functions have methods to convert `rx` models into CRAN equivalents:
+
+```{r}
+
+rpartModel <- as.rpart(dtree)
+
+```
+
+Now let's create a scoring function: 
+
+```{r}
+
+scoringFn <- function(testdata) {
+ 
+  library(rpart)
+  predict(rpartModel, newdata = testdata)[, 1]
+  
+}
+```
+
+and let's copy into a data.frame a portion of our training data to use as our schema:
+
+
+```{r}
+
+library(dplyr)
+exampleDF <- head(taxi_xdf) %>% select(trip_distance, passenger_count)
+
+```
+
+Let's make sure our scoring function works locally first:
+
+```{r}
+
+scoringFn(exampleDF)
+
+```
+
+
+We're ready to operationalize our model:
+
+
+```{r}
+
+endpoint <- publishWebService(ws, 
+                              fun = scoringFn,
+                              name = "Taxi-tip-rpart",
+                              inputSchema = exampleDF)
+
+```
+
+Let's try it out:
+
+
+```{r}
+
+
+scores <- consume(endpoint, exampleDF)
+head(scores)
+```
+
