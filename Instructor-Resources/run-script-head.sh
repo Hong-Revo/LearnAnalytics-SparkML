@@ -11,6 +11,6 @@ hdfs dfs -copyFromLocal data/ /yelp
 ## download notebooks
 
 git clone https://github.com/Azure/learnAnalytics-SparkML.git
-chown -R sshuser:sshuser ./learnAnalytics-SparkML
+# chown -R sshuser:sshuser ./learnAnalytics-SparkML
 cd learnAnalytics-SparkML/Student-Resources
 hdfs dfs -copyFromLocal Labs/ /HdiNotebooks/
