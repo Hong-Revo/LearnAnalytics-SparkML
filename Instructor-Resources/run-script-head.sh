@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-cd /home/spark
 cd /tmp
 mkdir data && cd data
 wget https://alizaidi.blob.core.windows.net/training/data/yelp/yelp_dataset_challenge_round9.tar
