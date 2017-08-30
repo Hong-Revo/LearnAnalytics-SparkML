@@ -43,3 +43,4 @@
 + [HDI Hero - Administration and Configuration of Spark Clusters](https://github.com/Azure/learnAnalytics-HDI-Hero)
 + [HDInsight Developer's Guide]()
 + [An ADF Example for Custom Spark Applications](https://github.com/Azure-Samples/data-factory-r-server-apache-spark-pipeline)
++ [Azure Data Factory with Spark Docs](https://docs.microsoft.com/en-us/azure/data-factory/data-factory-spark)
