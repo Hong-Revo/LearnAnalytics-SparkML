@@ -25,6 +25,10 @@
 
 + [BI Tools for Spark](https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apache-spark-use-bi-tools)
 	- How to connect Tableau and PowerBI to cached Spark tables
++ [Telemtry Analytics Solution](https://gallery.cortanaintelligence.com/Solution/Telemetry-Analytics)
+	- [Deep Dive into the Solution](https://docs.microsoft.com/en-us/azure/machine-learning/cortana-analytics-playbook-vehicle-telemetry-deep-dive)
++ [CosmosDB Connector to Spark](https://docs.microsoft.com/en-us/azure/machine-learning/cortana-analytics-playbook-vehicle-telemetry-deep-dive)
+	- [Sample Notebook Showing CosmosDB Connector, Spark SQL, GraphFrames and ML Pipelines](https://github.com/Azure/azure-cosmosdb-spark/blob/master/samples/notebooks/On-Time%2BFlight%2BPerformance%2Bwith%2BSpark%2Band%2BCosmos%2BDB%2B%2528Las%2BVegas%2529.ipynb)
 
 ### Installing Additional Machine Learning Packages
 
@@ -32,10 +36,7 @@
 	- **Note** - run the shell script from the headnode, not using the Jupyter notebook as the `spark` user in Jupyter does not have sufficient permissions.
 	- [Talk from Spark Summit 2017](https://spark-summit.org/2017/events/building-a-unified-data-pipeline-with-apache-spark-and-xgboost/)
 + [Weld](https://weld-project.github.io/)
-+ [Telemtry Analytics Solution](https://gallery.cortanaintelligence.com/Solution/Telemetry-Analytics)
-	- [Deep Dive into the Solution](https://docs.microsoft.com/en-us/azure/machine-learning/cortana-analytics-playbook-vehicle-telemetry-deep-dive)
-+ [CosmosDB Connector to Spark](https://docs.microsoft.com/en-us/azure/machine-learning/cortana-analytics-playbook-vehicle-telemetry-deep-dive)
-	- [Sample Notebook Showing CosmosDB Connector, Spark SQL, GraphFrames and ML Pipelines](https://github.com/Azure/azure-cosmosdb-spark/blob/master/samples/notebooks/On-Time%2BFlight%2BPerformance%2Bwith%2BSpark%2Band%2BCosmos%2BDB%2B%2528Las%2BVegas%2529.ipynb)
+
 
 ## Additional Resources
 
