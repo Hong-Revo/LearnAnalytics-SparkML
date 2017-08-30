@@ -8,7 +8,7 @@
 ### Resources
 
 + [Installing the Azure HDInsight Plugin for IntelliJ](https://docs.microsoft.com/en-us/azure/azure-toolkit-for-intellij-installation)
-+ [Submmitting Applications with IntelliJ](https://azmmlspark.azurehdinsight.net/yarnui/hn/cluster)
++ [Submmitting Applications with IntelliJ](https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apache-spark-intellij-tool-plugin)
 + [Remote Debugging of Spark Applications with IntelliJ](https://docs.microsoft.com/en-us/azure/hdinsight/hdinsight-apache-spark-intellij-tool-debug-remotely-through-ssh)
 
 
